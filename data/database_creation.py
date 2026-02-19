@@ -10,7 +10,7 @@ conn = engine.connect()
 metadata = db.MetaData()
 
 #creates the table for diary prices
-Diary = db.Table('Diary', metadata,
+Stocks = db.Table('Stocks', metadata,
                  db.Column('date', db.DateTime, primary_key=True),
                  db.Column('ticker', db.String(6), nullable=False, primary_key=True),
                  db.Column('open', db.Float, nullable=False),
