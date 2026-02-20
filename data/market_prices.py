@@ -35,6 +35,7 @@ def get_info(ticker, period = 'max'):
         columns={'Date': 'date', 'Open': 'open', 'High': 'high', 'Low': 'low', 'Close': 'close', 'Volume': 'volume'},
         inplace=True)
 
+    #get last date registered in the db
     with engine.connect() as conn:
         result = conn.execute(text(f'SELECT MAX(date) FROM Stocks WHERE ticker = "{ticker}"'))
         last_date = result.scalar() #scalar() returns one single value

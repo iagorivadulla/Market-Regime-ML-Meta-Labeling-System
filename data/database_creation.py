@@ -25,7 +25,6 @@ Macro = db.Table('Macro', metadata,
                  db.Column('date', db.DateTime, primary_key=True),
                  db.Column('serie', db.String(10), nullable=False, primary_key=True), #the name of the macro data
                  db.Column('value', db.Float, nullable=False),
-                 db.Column('vintage_date', db.DateTime, nullable=False),#the date of publish
                  )
 
 #creates the table for events
