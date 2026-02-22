@@ -126,51 +126,51 @@ def get_events():
 
             events = [
                 # monetary policy
-                'Federal Funds Rate'
-                'FOMC Statement'
-                'FOMC Press Conference'
-                'FOMC Economic Projections'
-                'Fed Chair Press Conference'
+                'Federal Funds Rate',
+                'FOMC Statement',
+                'FOMC Press Conference',
+                'FOMC Economic Projections',
+                'Fed Chair Press Conference',
 
                 # inflation
-                'Core CPI m/m'
-                'CPI m/m'
-                'Core CPI y/y'
-                'PPI m/m'
-                'Core PCE Price Index m/m'
-                'PCE Price Index m/m'
+                'Core CPI m/m',
+                'CPI m/m',
+                'Core CPI y/y',
+                'PPI m/m',
+                'Core PCE Price Index m/m',
+                'PCE Price Index m/m',
 
                 # laboral
-                'Non-Farm Employment Change'
-                'Unemployment Rate'
-                'Average Hourly Earnings m/m'
-                'Initial Jobless Claims'
+                'Non-Farm Employment Change',
+                'Unemployment Rate',
+                'Average Hourly Earnings m/m',
+                'Initial Jobless Claims',
 
                 # growth
-                'Advance GDP q/q'
-                'Prelim GDP q/q'
-                'Final GDP q/q'
+                'Advance GDP q/q',
+                'Prelim GDP q/q',
+                'Final GDP q/q',
 
                 # Spending
-                'Retail Sales m/m'
-                'Core Retail Sales m/m'
-                'Personal Spending m/m'
-                'Personal Income m/m'
+                'Retail Sales m/m',
+                'Core Retail Sales m/m',
+                'Personal Spending m/m',
+                'Personal Income m/m',
 
                 # Economic feeling
-                'ISM Manufacturing PMI'
-                'ISM Services PMI'
-                'S&P Global Manufacturing PMI'
-                'S&P Global Services PMI'
+                'ISM Manufacturing PMI',
+                'ISM Services PMI',
+                'S&P Global Manufacturing PMI',
+                'S&P Global Services PMI',
 
                 # Housing
-                'Building Permits'
-                'Housing Starts'
-                'Existing Home Sales'
-                'New Home Sales'
+                'Building Permits',
+                'Housing Starts',
+                'Existing Home Sales',
+                'New Home Sales',
             ]
 
-            # df = df[df['event'].isin(events)]
+            df = df[df['event'].isin(events)]
 
             print(f'{len(df)} new entries added')
             macro_events = pd.concat([macro_events, df])
