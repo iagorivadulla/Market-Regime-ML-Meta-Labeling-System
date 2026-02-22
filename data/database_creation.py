@@ -30,8 +30,9 @@ Macro = db.Table('Macro', metadata,
 #creates the table for events
 Events = db.Table('Events', metadata,
                   db.Column('date', db.DateTime, primary_key=True),
-                  db.Column('event', db.String(10), nullable=False, primary_key=True),
-                  db.Column('description', db.String(100), nullable=False),
+                  db.Column('event', db.String(100), nullable=False, primary_key=True),
+                  db.Column('actual', db.String(100), nullable=True),
+                  db.Column('previous', db.String(100), nullable=True),
                   )
 
 metadata.create_all(engine)
