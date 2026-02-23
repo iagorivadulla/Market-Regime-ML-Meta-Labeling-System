@@ -10,7 +10,7 @@ from sqlalchemy import text
 from datetime import datetime
 
 
-def get_events():
+def get_events_calendar():
     driver = webdriver.Chrome()
     driver.get("https://www.forexfactory.com/calendar")
 
@@ -145,14 +145,14 @@ def get_events():
 
             events = [
                 #monetary policy
-                'Federal Funds Rate',
-                'FOMC Statement',
+                'US Federal Funds Rate',
+                'US FOMC Statement',
                 'FOMC Press Conference',
                 'FOMC Economic Projections',
                 'Fed Chair Press Conference',
 
                 #inflation
-                'Core CPI m/m',
+                'US Core CPI m/m',
                 'CPI m/m',
                 'Core CPI y/y',
                 'PPI m/m',
@@ -205,6 +205,13 @@ def get_events():
         print(f'{len(macro_events)} new entries added to the database')
 
     driver.quit()
+
+def get_events():
+    driver = webdriver.Chrome()
+    driver.get("https://www.forexfactory.com/calendar")
+
+
+
 
 if __name__ == '__main__':
     get_events()
