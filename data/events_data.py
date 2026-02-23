@@ -192,7 +192,7 @@ def get_events():
 
             df = df[df['event'].isin(events)]
 
-            print(f'{len(df)} new entries added')
+            print(f'{len(df)} new entries fetched')
             macro_events = pd.concat([macro_events, df])
 
             actions.send_keys(Keys.HOME).perform()

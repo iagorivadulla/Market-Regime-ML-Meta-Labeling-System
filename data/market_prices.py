@@ -56,13 +56,17 @@ def get_info(ticker, period = 'max'):
         print(f'{ticker}: {len(data)} files created')
 
 
-
-#first iteration to get all data
-if __name__ == '__main__':
-
+def get_market_prices():
     #list with the tickers names
     tickers = ['SPY', 'QQQ', '^VIX', 'DX-Y.NYB', 'GC=F']
 
     for ticker in tickers:
         get_info(ticker)
         print(f'{ticker} data retrieved')
+
+
+#first iteration to get all data
+if __name__ == '__main__':
+    get_market_prices()
+
+
