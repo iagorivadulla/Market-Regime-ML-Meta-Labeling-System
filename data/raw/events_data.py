@@ -58,16 +58,20 @@ def get_events():
 
         actions = ActionChains(driver)
 
+        #search for the search bar and clicks it
         driver.find_element(By.XPATH, '//*[@id="content"]/section[2]/div[3]/div/div/div/div/div[1]/ul/li[7]/a').click()
         time.sleep(1)
 
+        #click the search input
         driver.find_element(By.XPATH, '//*[@id="calendar-search-input"]').click()
         time.sleep(1)
 
+        #writes the event name
         actions.send_keys(event)
         actions.perform()
         time.sleep(1)
 
+        #search the event in the dropdown menu and clicks it
         driver.find_element(By.LINK_TEXT, event).click()
 
         return driver
@@ -81,24 +85,27 @@ def get_events():
                 #if footer is hidden stops
                 driver.find_element(By.CSS_SELECTOR, ".foot.hidden")
                 time.sleep(1)
+                #goes to the end of the site to load all the htm
                 actions.send_keys(Keys.END).perform()
                 time.sleep(1)
+                #do the same but going at the start of the site
                 actions.send_keys(Keys.HOME).perform()
                 time.sleep(1)
                 break
 
             except NoSuchElementException:
-                # if not footer is hidden, click more button
+                # if not footer is hidden, click more button to load all dates
                 more = driver.find_element(By.CLASS_NAME, "more")
                 more.click()
                 time.sleep(1)
+
         return driver
 
 
     def get_event(driver):
         #get html
         page_html = driver.page_source
-        print('get html')
+        print('Get html')
 
         #read the html with beautifulsoup
         soup = BeautifulSoup(page_html, 'lxml')
@@ -112,14 +119,16 @@ def get_events():
 
         #stores the data into a dict
         for i in range(0, len(dates)):
+            date = pd.to_datetime(dates[i].text.strip()) #format the date
 
-            date = pd.to_datetime(dates[i].text.strip())
-
+            #load the data into the data dict
             data[date] = (currents[i].text.strip() if currents else None,
                                            previouses[i].text.strip() if previouses else None)
 
-        print('data obtained')
+        print('Data obtained')
+        #closes the web driver
         driver.close()
+        #returns the data dict
         return data
 
 
@@ -138,24 +147,23 @@ def get_events():
     user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
     chrome_options.add_argument(f'user-agent={user_agent}')
 
-    # disable some features
+    # disable some features to avoid bot detections
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
 
-
+    #start searching all events stored into events' list
     for i in events:
         with engine.connect() as conn:
+            #search for the most recent date stored for this event
             result = conn.execute(text((f'SELECT MAX(date) FROM Events WHERE event = "{i}"')))
             last_date = result.scalar()
             if last_date:
                 last_date = pd.to_datetime(last_date).normalize()
 
-
             print(i)
-
             driver = webdriver.Chrome(options=chrome_options) #delete the option to see the navigator proces
-            driver.get("https://www.forexfactory.com/calendar")
+            driver.get("https://www.forexfactory.com/calendar") #loads the site
 
-            data = get_event(search_dates((select_event(i, driver))))
+            data = get_event(search_dates((select_event(i, driver)))) #data is stored
 
             driver.quit()
 
@@ -165,10 +173,9 @@ def get_events():
                     if last_date is None or date > last_date:
                         conn.execute(text((f'INSERT INTO Events VALUES ("{str(date)}", "{i}", "{current}", "{previous}")')))
                         conn.commit()
-                        print(f'{i} saved')
                 print(f'{i} is up to date')
                 conn.close()
-    print('Everything is up to date')
+    print('Everything is up to date!')
 
 
 
