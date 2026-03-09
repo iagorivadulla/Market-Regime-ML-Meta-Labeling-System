@@ -5,3 +5,4 @@ selenium~=4.41.0
 lxml~=6.0.2
 pyarrow~=23.0.1
 fastparquet
+TA-Lib~=0.6.8
