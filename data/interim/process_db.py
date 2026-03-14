@@ -1,4 +1,3 @@
-import sqlalchemy as db
 import numpy as np
 import sqlalchemy as db
 import pandas as pd
@@ -77,10 +76,15 @@ def process_db():
 
     df_stocks = df_stocks.dropna(how='any')
 
+    # defragment memory
+    df_stocks = df_stocks.copy()
+
     #save here into db
+    df_stocks.to_sql("stocks_processed", engine, if_exists="replace")
 
 
-    data_fed = pd.read_sql('SELECT * FROM Macro', con=engine)  # loads macro data table
+    # loads macro data table
+    data_fed = pd.read_sql('SELECT * FROM Macro', con=engine)
 
     # get all dates from original dataframe
     data_fed['date'] = pd.to_datetime(data_fed['date'])
@@ -89,13 +93,14 @@ def process_db():
     # create the new dataframe and set all sorted dates as index
     data_fed_transposed = pd.DataFrame(index=all_dates)
 
+    cols = data_fed['serie'].unique()
     # creates one new colum for each serie and assign all the values into the correct date
-    for colum in cols:
-        if colum == 'SOFR':
+    for column in cols:
+        if column == 'SOFR':
             pass
         else:
-            series_data = data_fed[data_fed['serie'] == colum].set_index('date')['value']
-            data_fed_transposed[colum] = series_data
+            series_data = data_fed[data_fed['serie'] == column].set_index('date')['value']
+            data_fed_transposed[column] = series_data
 
     # now we need to fill al Nans with the previous values
     data_fed_transposed = data_fed_transposed.ffill(axis=0)  # ffill
@@ -103,9 +108,13 @@ def process_db():
     data_fed_transposed = data_fed_transposed.dropna(axis=0, how='any')
 
     #save here data fed
+    data_fed_transposed.to_sql("macro_processed", engine, if_exists="replace")
 
+
+
+    # load events with data
     data_events = pd.read_sql('SELECT * FROM Events WHERE actual != "None" OR previous != "None"',
-                              con=engine)  # load events with data
+                              con=engine)
 
     # get all dates from original dataframe
     data_events['date'] = pd.to_datetime(data_events['date'])
@@ -155,10 +164,13 @@ def process_db():
     data_events_clean = data_events_transposed.apply(lambda col: col.map(clean_values))
 
     #save here data events
+    data_events_clean.to_sql("events_processed", engine, if_exists="replace")
 
 
+
+    # load events without data
     events_no_data = pd.read_sql('SELECT * FROM Events WHERE actual = "None" AND previous = "None"',
-                                 con=engine)  # load events without data
+                                 con=engine)
 
     # manually adds next event date, all of them are Mar 18 2026
     future_event_dates = pd.to_datetime('2026-03-18')
@@ -202,3 +214,7 @@ def process_db():
     df_countdown.index.name = 'date'
 
     #save here
+    df_countdown.to_sql("events_countdown", engine, if_exists="replace")
+
+if __name__ == '__main__':
+    process_db()

@@ -133,7 +133,7 @@ def get_events():
 
 
     #starts db engine
-    engine = db.create_engine('sqlite:///data.db')
+    engine = db.create_engine('sqlite:///../data/raw/data.db')
 
     #option to run navigator silently
     chrome_options = Options()

@@ -1,7 +1,7 @@
 import sqlalchemy as db
 
 #creates the database as data.db
-engine = db.create_engine('sqlite:///data.db')
+engine = db.create_engine('sqlite:///../data/raw/data.db')
 
 #connection object
 conn = engine.connect()
@@ -35,4 +35,7 @@ Events = db.Table('Events', metadata,
                   db.Column('previous', db.String(100), nullable=True),
                   )
 
+
+
 metadata.create_all(engine)
+conn.close()
