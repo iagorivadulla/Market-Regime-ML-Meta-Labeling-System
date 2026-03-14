@@ -107,6 +107,9 @@ def process_db(engine):
 
     data_fed_transposed = data_fed_transposed.dropna(axis=0, how='any')
 
+    #change index name
+    data_fed_transposed.index.name = 'date'
+
     #save here data fed
     data_fed_transposed.to_sql("macro_processed", engine, if_exists="replace")
 

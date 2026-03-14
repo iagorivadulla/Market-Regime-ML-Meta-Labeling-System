@@ -314,7 +314,7 @@ def search_event(engine):
 
     finally:
         driver.quit()
-        print("\n✅ All events up to date. Driver closed.")
+        print("\nAll events up to date. Driver closed.")
 
 
 if __name__ == "__main__":

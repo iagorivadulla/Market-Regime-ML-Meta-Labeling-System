@@ -9,7 +9,7 @@ def final_db(engine):
     events = pd.read_sql('SELECT * FROM events_processed', engine)
     event_day = pd.read_sql('SELECT * FROM events_countdown', engine)
 
-    for df_temp in (stocks, fed, events, event_day):
+    for df_temp in [stocks, fed, events, event_day]:
         df_temp['date'] = pd.to_datetime(df_temp['date'])
         df_temp.set_index('date', inplace=True)
 
