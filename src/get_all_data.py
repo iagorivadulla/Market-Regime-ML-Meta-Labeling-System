@@ -8,9 +8,13 @@ from data.interim.process_db import process_db
 from data.processed.final_db import final_db
 
 def get_all_data():
+    print('Searching for events')
     get_events()
+    print('Searching for fed data')
     get_fed_data()
+    print('Searching for market prices')
     get_market_prices()
+    print('processing database')
     process_db()
     return final_db()
 
