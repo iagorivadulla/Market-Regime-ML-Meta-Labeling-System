@@ -68,7 +68,7 @@ def get_data(serie):
     with engine.connect() as conn:
         data[['date', 'value', 'serie']].to_sql('Macro', conn, if_exists='append', index=False)
         conn.commit()
-        print(f'{serie}: {len(data)} files created')
+        print(f'{serie}: {len(data)} rows created')
 
 def get_fed_data():
     indicators = [
