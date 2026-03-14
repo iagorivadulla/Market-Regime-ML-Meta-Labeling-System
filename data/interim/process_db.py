@@ -4,8 +4,8 @@ import pandas as pd
 import talib as ta
 
 
-def process_db():
-    engine = db.create_engine('sqlite:///../raw/data.db')
+def process_db(engine):
+    #engine = db.create_engine('sqlite:///../data/raw/data.db')
 
     # loads all tables from db splitting events if they have data or don't
     data_stocks = pd.read_sql('SELECT * FROM Stocks', con=engine)  # Loads Stocks table
@@ -172,12 +172,14 @@ def process_db():
     events_no_data = pd.read_sql('SELECT * FROM Events WHERE actual = "None" AND previous = "None"',
                                  con=engine)
 
-    # manually adds next event date, all of them are Mar 18 2026
-    future_event_dates = pd.to_datetime('2026-03-18')
+
+    future_event_dates = pd.read_sql('SELECT * FROM Schedule', con=engine)
     cols = events_no_data['event'].unique()
 
+    upcoming_lookup = future_event_dates.set_index('event')['upcoming_date']
+
     last_event = pd.DataFrame({
-        'date': [future_event_dates] * len(cols),  # number of events
+        'date': upcoming_lookup.loc[cols].values,  # number of events
         'event': cols
     })
 

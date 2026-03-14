@@ -17,7 +17,7 @@ from selenium.webdriver.support import expected_conditions as EC
 # ── Config ─────────────────────────────────────────────────────────────────────
 
 # Set to True to run Chrome in the background (no visible window)
-HEADLESS = False
+HEADLESS = True
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -160,7 +160,7 @@ def parse_events(driver):
 
 # ── Main function ──────────────────────────────────────────────────────────────
 
-def search_event():
+def search_event(engine):
     events = [
         # Monetary policy
         "US Federal Funds Rate",
@@ -203,7 +203,7 @@ def search_event():
     ]
 
     # ── Database setup ─────────────────────────────────────────────────────────
-    engine = db.create_engine("sqlite:///data.db")
+    #engine = db.create_engine("sqlite:///../data/raw/data.db")
 
     # Create tables if they do not exist yet
     with engine.connect() as conn:
@@ -301,9 +301,7 @@ def search_event():
                 with engine.connect() as conn:
                     conn.execute(
                         text("""
-                            INSERT INTO Schedule (event, upcoming_date)
-                            VALUES (:e, :u)
-                            ON CONFLICT(event) DO UPDATE SET upcoming_date = :u
+                            INSERT OR REPLACE INTO Schedule VALUES (:e, :u)
                         """),
                         {"e": event, "u": str(upcoming_date)}
                     )

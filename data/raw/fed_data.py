@@ -9,7 +9,7 @@ from sqlalchemy import text
 to get a free api key go to https://fredaccount.stlouisfed.org/apikey
 '''
 
-def get_data(serie):
+def get_data(serie, engine):
     '''
     Process and store in the db the indicator
     '''
@@ -25,7 +25,7 @@ def get_data(serie):
     }
 
     # creates the database engine
-    engine = db.create_engine('sqlite:///data.db')
+    #engine = db.create_engine('sqlite:///../data/raw/data.db')
 
     # uploads the api key from .env
     load_dotenv()
@@ -70,7 +70,7 @@ def get_data(serie):
         conn.commit()
         print(f'{serie}: {len(data)} rows created')
 
-def get_fed_data():
+def get_fed_data(engine):
     indicators = [
         # Interest rates and monetary policy
         'FEDFUNDS',  # Effective Fed Funds Rate
@@ -103,7 +103,7 @@ def get_fed_data():
 
 
     for serie in indicators:
-        get_data(serie)
+        get_data(serie, engine)
 
 
 

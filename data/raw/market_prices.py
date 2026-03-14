@@ -13,10 +13,10 @@ Downloads data from:
 '''
 
 #creates the database engine
-engine = db.create_engine('sqlite:///data.db')
+#engine = db.create_engine('sqlite:///../data/raw/data.db')
 
 
-def get_info(ticker, period = 'max'):
+def get_info(ticker, engine, period = 'max'):
     #get data from ticker and period
     stock = yf.Ticker(ticker)
 
@@ -56,12 +56,12 @@ def get_info(ticker, period = 'max'):
         print(f'{ticker}: {len(data)} files created')
 
 
-def get_market_prices():
+def get_market_prices(engine):
     #list with the tickers names
     tickers = ['SPY', 'QQQ', '^VIX', 'DX-Y.NYB', 'GC=F']
 
     for ticker in tickers:
-        get_info(ticker)
+        get_info(ticker, engine)
         print(f'{ticker} data retrieved')
 
 

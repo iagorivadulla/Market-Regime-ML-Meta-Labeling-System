@@ -1,8 +1,8 @@
 import pandas as pd
 import sqlalchemy as db
 
-def final_db():
-    engine = db.create_engine('sqlite:///../raw/data.db')
+def final_db(engine):
+    #engine = db.create_engine('sqlite:///../raw/data.db')
 
     stocks = pd.read_sql('SELECT * FROM stocks_processed', con=engine)
     fed = pd.read_sql('SELECT * FROM macro_processed', con=engine)
