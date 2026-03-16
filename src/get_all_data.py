@@ -15,8 +15,9 @@ def get_all_data(engine):
     get_fed_data(engine)
     print('Searching for market prices')
     get_market_prices(engine)
-    print('processing database')
+    print('Processing database')
     process_db(engine)
+    print('All done')
     return final_db(engine)
 
 if __name__ == '__main__':
