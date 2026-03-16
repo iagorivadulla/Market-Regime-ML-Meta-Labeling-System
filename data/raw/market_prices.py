@@ -1,3 +1,4 @@
+import time
 import yfinance as yf
 import sqlalchemy as db
 from sqlalchemy import text
@@ -8,7 +9,7 @@ Downloads data from:
 #SPY (S&P500 INDEX)
 #QQQ (NASDAQ)
 #^VIX (VOLATILITY)
-#DX-Y.NYB (DOLLAR INDEX)
+#DX=F (DOLLAR INDEX FUTURES)
 #GC=F (GOLD FUTURES)
 '''
 
@@ -17,24 +18,41 @@ Downloads data from:
 
 
 def get_info(ticker, engine, period='max'):
-    # --- Download ---
-    try:
-        stock = yf.Ticker(ticker)
-        if period == 'max':
-            data = stock.history(period=period, interval='1d')
-        else:
-            data = stock.history(start=period, interval='1d')
-    except KeyError as e:
-        print(f'[{ticker}] Yahoo Finance returned an unexpected response (KeyError: {e}). '
-              f'Try updating yfinance: pip install --upgrade yfinance')
-        return None
-    except Exception as e:
-        print(f'[{ticker}] Failed to download data: {e}')
-        return None
+    """
+    Returns:
+        'inserted'   — new rows were written to the DB
+        'up_to_date' — data exists but nothing new to add
+        'error'      — something went wrong (download or DB failure)
+    """
+    # --- Download (with retry) ---
+    max_retries = 3
+    retry_delay = 5  # seconds between retries
+    data = None
 
-    if data.empty:
-        print(f'[{ticker}] No data returned — ticker may be invalid or delisted.')
-        return None
+    for attempt in range(1, max_retries + 1):
+        try:
+            stock = yf.Ticker(ticker)
+            if period == 'max':
+                data = stock.history(period=period, interval='1d')
+            else:
+                data = stock.history(start=period, interval='1d')
+
+            if data is not None and not data.empty:
+                break  # success
+
+            print(f'[{ticker}] Empty response on attempt {attempt}/{max_retries}, retrying in {retry_delay}s...')
+        except KeyError as e:
+            print(f'[{ticker}] Unexpected response (KeyError: {e}) on attempt {attempt}/{max_retries}. '
+                  f'Try: pip install --upgrade yfinance')
+        except Exception as e:
+            print(f'[{ticker}] Download error on attempt {attempt}/{max_retries}: {e}')
+
+        if attempt < max_retries:
+            time.sleep(retry_delay)
+
+    if data is None or data.empty:
+        print(f'[{ticker}] Failed after {max_retries} attempts — skipping.')
+        return 'error'
 
     # --- Transform ---
     data['ticker'] = ticker
@@ -52,7 +70,7 @@ def get_info(ticker, engine, period='max'):
             last_date = result.scalar()
     except Exception as e:
         print(f'[{ticker}] Could not query last date from DB: {e}')
-        return None
+        return 'error'
 
     if last_date:
         last_date = pd.to_datetime(last_date).normalize()
@@ -60,7 +78,7 @@ def get_info(ticker, engine, period='max'):
 
     if data.empty:
         print(f'[{ticker}] Already up to date, no new rows to insert.')
-        return None
+        return 'up_to_date'
 
     # --- Save ---
     try:
@@ -69,23 +87,26 @@ def get_info(ticker, engine, period='max'):
                 'Stocks', conn, if_exists='append', index=False)
             conn.commit()
         print(f'[{ticker}] {len(data)} rows inserted.')
+        return 'inserted'
     except Exception as e:
         print(f'[{ticker}] Failed to write to database: {e}')
-        return None
+        return 'error'
 
 
 def get_market_prices(engine):
-    tickers = ['SPY', 'QQQ', '^VIX', 'DX-Y.NYB', 'GC=F']
+    tickers = ['SPY', 'QQQ', '^VIX', 'DX=F', 'GC=F']
     failed = []
 
     for ticker in tickers:
         print(f'Fetching {ticker}...')
-        result = get_info(ticker, engine)
-        if result is None and ticker not in ['SPY']:  # get_info prints its own reason
+        status = get_info(ticker, engine)
+        if status == 'error':
             failed.append(ticker)
 
     if failed:
         print(f'\nThe following tickers had issues: {failed}')
+    else:
+        print('\nAll tickers fetched successfully.')
 
 
 #first iteration to get all data
