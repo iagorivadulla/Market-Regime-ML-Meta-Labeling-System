@@ -8,3 +8,4 @@ fastparquet
 TA-Lib~=0.6.8
 hmmlearn~=0.3.3
 undetected-chromedriver~=3.5.5
+xgboost~=3.2.0

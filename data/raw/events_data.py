@@ -17,7 +17,7 @@ from selenium.webdriver.support import expected_conditions as EC
 # ── Config ─────────────────────────────────────────────────────────────────────
 
 # Set to True to run Chrome in the background (no visible window)
-HEADLESS = True
+HEADLESS = False
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -318,4 +318,5 @@ def search_event(engine):
 
 
 if __name__ == "__main__":
-    search_event()
+    engine = db.create_engine('sqlite:///data.db')
+    search_event(engine)
