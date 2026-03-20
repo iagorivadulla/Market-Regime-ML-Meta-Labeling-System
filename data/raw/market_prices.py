@@ -94,7 +94,7 @@ def get_info(ticker, engine, period='max'):
 
 
 def get_market_prices(engine):
-    tickers = ['SPY', 'QQQ', '^VIX', 'DX=F', 'GC=F']
+    tickers = ['SPY', 'QQQ', '^VIX', 'DX-Y.NYB', 'GC=F']
     failed = []
 
     for ticker in tickers:
