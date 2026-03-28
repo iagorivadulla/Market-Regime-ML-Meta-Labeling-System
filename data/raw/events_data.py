@@ -17,7 +17,7 @@ from selenium.webdriver.support import expected_conditions as EC
 # ── Config ─────────────────────────────────────────────────────────────────────
 
 # Set to True to run Chrome in the background (no visible window)
-HEADLESS = False
+HEADLESS = True
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────

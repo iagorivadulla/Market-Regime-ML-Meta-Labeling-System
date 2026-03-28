@@ -1,4 +1,9 @@
 #search and save data into db
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from data.raw.market_prices import get_market_prices
 from data.raw.events_data import search_event
 from data.raw.fed_data import get_fed_data
