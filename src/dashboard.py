@@ -127,17 +127,43 @@ st.markdown("""
 
   /* Macro table */
   .macro-row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 5px 0; border-bottom: 1px solid #0f1a2a;
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;  /* nombre | valor | badges */
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
   }
-  .macro-row:last-child { border-bottom: none; }
-  .macro-name { color: #8aa8c4; width: 55%; }
-  .macro-val  { color: #d4d4d4; font-weight: 600; width: 25%; text-align: right; }
-  .macro-chg  { width: 20%; text-align: right; font-size: 10px; }
-  .up   { color: #00d084; }
-  .down { color: #e05260; }
-  .neu  { color: #8a9aaa; }
+  .macro-name {
+    font-size: 0.75rem;
+    color: #ccc;
+    white-space: nowrap;
+  }
+  .macro-val {
+    font-size: 0.75rem;
+    color: #fff;
+    font-weight: 700;
+    text-align: center;
+  }
+  .macro-badges {
+    display: flex;
+    gap: 4px;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+  }
+  .macro-badge {
+    font-size: 0.62rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.3;
+    min-width: 48px;
+    white-space: nowrap;
+  }
+  .macro-badge.up   { background: rgba(0,200,100,0.15); color: #00c864; }
+  .macro-badge.down { background: rgba(220,50,50,0.15);  color: #dc3232; }
+  .macro-badge.neu  { background: rgba(150,150,150,0.1); color: #555; }
 
   /* Events countdown */
   .event-row {
@@ -268,7 +294,7 @@ def load_data():
     df = stocks.join([macro, events, countdown], how='left')
     df = df.ffill()
     df = df.dropna(how='any')
-    return {"df": df, "raw_stocks": stocks, "macro": macro, "countdown": countdown, "schedule": schedule}, None
+    return {"df": df, "raw_stocks": stocks, "macro": macro, "countdown": countdown, "schedule": schedule, "events": events}, None
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -774,11 +800,21 @@ def main():
         ("WALCL",          "Fed Balance Sheet",   "T$", False),
         ("M2SL",           "M2 Money Supply",     "B$", False),
         ("NFCI",           "NFCI",                "",   True),
+        ("US Existing Home Sales", "Existing Home Sales", "M$", False),
+        ("US New Home Sales", "New Home Sales", "K$", False ),
     ]
 
     with col_macro:
         st.markdown('<div class="section-title">MACRO INDICATORS</div>', unsafe_allow_html=True)
-        macro_df = data["macro"]
+        macro_df = pd.concat([data["macro"], data["events"]], axis=1)
+
+        periods = {
+            "3M": 63,
+            "6M": 126,
+            "1Y": 252,
+            "2Y": 504,
+            "5Y": 1260,
+        }
 
         rows_html = ""
         for serie, label, unit, higher_bad in macro_indicators:
@@ -787,32 +823,47 @@ def main():
             vals = macro_df[serie].dropna()
             if len(vals) < 2:
                 continue
-            val  = vals.iloc[-1]
-            prev = vals.iloc[-2]
-            chg  = val - prev
-            chg_pct = chg / abs(prev) * 100 if prev != 0 else 0
+            val = vals.iloc[-1]
 
             if unit == "T$":
-                disp = f"{val/1e6:.2f}T"
+                disp = f"{val / 1e6:.2f}T"
             elif unit == "B$":
-                disp = f"{val/1e3:.1f}B"
+                disp = f"{val / 1e3:.2f}B"
+            elif unit == "M$":
+                disp = f"{val / 1e6:.2f}M"
+            elif unit == "K$":
+                disp = f"{val / 1e3:.2f}K"
             elif unit == "%":
                 disp = f"{val:.2f}%"
             else:
                 disp = f"{val:.2f}"
 
-            if abs(chg) < 1e-6:
-                arrow, cls = "→", "neu"
-            elif (chg > 0 and not higher_bad) or (chg < 0 and higher_bad):
-                arrow, cls = "▲", "up"
-            else:
-                arrow, cls = "▼", "down"
+            badges_html = ""
+            for period_label, lookback in periods.items():
+                if len(vals) < lookback + 1:
+                    badges_html += f'<span class="macro-badge neu">–</span>'
+                    continue
+                ref = vals.iloc[-(lookback + 1)]
+                if ref == 0:
+                    badges_html += f'<span class="macro-badge neu">–</span>'
+                    continue
+                chg_pct = (val - ref) / abs(ref) * 100
+
+                if abs(chg_pct) < 0.01:
+                    cls = "neu"
+                elif (chg_pct > 0 and not higher_bad) or (chg_pct < 0 and higher_bad):
+                    cls = "up"
+                else:
+                    cls = "down"
+
+                sign = "+" if chg_pct > 0 else ""
+                badges_html += f'<span class="macro-badge {cls}">{period_label}<br>{sign}{chg_pct:.1f}%</span>'
 
             rows_html += f"""
             <div class="macro-row">
               <span class="macro-name">{label}</span>
               <span class="macro-val">{disp}</span>
-              <span class="macro-chg {cls}">{arrow} {abs(chg_pct):.1f}%</span>
+              <div class="macro-badges">{badges_html}</div>
             </div>"""
 
         st.markdown(f'<div class="scroll-box">{rows_html}</div>', unsafe_allow_html=True)
