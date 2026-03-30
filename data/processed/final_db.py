@@ -13,6 +13,13 @@ def final_db(engine):
         df_temp['date'] = pd.to_datetime(df_temp['date'])
         df_temp.set_index('date', inplace=True)
 
-    df = pd.concat([events, fed, stocks, event_day], axis=1).dropna()
+    # Usar stocks como base y hacer join, rellenando huecos con ffill
+    df = stocks.join([events, fed, event_day], how='left')
+    df = df.ffill()
+    df = df.dropna(how='all')
+
+    # Cortar hasta hoy
+    today = pd.Timestamp.today().normalize()
+    df = df[df.index <= today]
 
     return df

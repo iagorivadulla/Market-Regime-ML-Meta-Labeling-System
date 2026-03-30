@@ -104,7 +104,6 @@ def process_db(engine):
 
     # now we need to fill al Nans with the previous values
     data_fed_transposed = data_fed_transposed.ffill(axis=0)  # ffill
-
     data_fed_transposed = data_fed_transposed.dropna(axis=0, how='any')
 
     #change index name
@@ -132,8 +131,7 @@ def process_db(engine):
 
     # fill forward
     data_events_transposed = data_events_transposed.ffill(axis=0)
-
-    data_events_transposed = data_events_transposed.dropna(axis=0, how='any')
+    data_events_transposed = data_events_transposed.dropna(axis=0, how='all')
 
     #clean the values in event
     def clean_values(val):
