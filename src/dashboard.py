@@ -265,7 +265,9 @@ def load_data():
         df_t["date"] = pd.to_datetime(df_t["date"])
         df_t.set_index("date", inplace=True)
 
-    df = pd.concat([events, macro, stocks, countdown], axis=1).dropna()
+    df = stocks.join([macro, events, countdown], how='left')
+    df = df.ffill()
+    df = df.dropna(how='any')
     return {"df": df, "raw_stocks": stocks, "macro": macro, "countdown": countdown, "schedule": schedule}, None
 
 

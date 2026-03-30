@@ -16,7 +16,7 @@ def final_db(engine):
     # Usar stocks como base y hacer join, rellenando huecos con ffill
     df = stocks.join([events, fed, event_day], how='left')
     df = df.ffill()
-    df = df.dropna(how='all')
+    df = df.dropna(how='any')
 
     # Cortar hasta hoy
     today = pd.Timestamp.today().normalize()
