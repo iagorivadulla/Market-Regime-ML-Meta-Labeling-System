@@ -209,7 +209,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ── Colour map ─────────────────────────────────────────────────────────────────
+# ── Colour map (fallback / defaults) ──────────────────────────────────────────
 REGIME_COLORS = {
     0: ("#00d084", "green",  "BULL TREND"),
     1: ("#f0a500", "yellow", "TRANSITIONAL"),
@@ -217,6 +217,110 @@ REGIME_COLORS = {
     3: ("#3a8fd4", "blue",   "LOW VOL RANGE"),
     4: ("#9b59b6", "purple", "HIGH VOL RANGE"),
 }
+
+@st.cache_data(show_spinner=False)
+def compute_regime_colors(_df, _models):
+    df       = _df.copy()
+    model    = _models["hmm"]
+    scaler   = _models["scaler"]
+    pca      = _models["pca"]
+    n_states = model.n_components
+
+    # ── 1. Stats per state ────────────────────────────────────────────────────
+    df["spy_ret"] = df["spy_close"].pct_change()
+    stats = df.groupby("state")["spy_ret"].agg(
+        mean_ret="mean", std_ret="std", count="count"
+    )
+    stats["annual_ret"] = stats["mean_ret"] * 252 * 100
+    stats["annual_vol"] = stats["std_ret"]  * np.sqrt(252) * 100
+    stats["sharpe"]     = stats["annual_ret"] / (stats["annual_vol"] + 1e-9)
+
+    means_df = pd.DataFrame(
+        scaler.inverse_transform(pca.inverse_transform(model.means_)),
+        columns=_models["feature_cols"]
+    )
+
+    valid_states = [s for s in range(n_states) if s in stats.index]
+
+    # ── 2. Build feature vector per state (normalised 0-1) ────────────────────
+    def get(s, col, default):
+        return means_df.iloc[s].get(col, default)
+
+    raw = {s: {
+        "ret":  stats.loc[s, "annual_ret"],
+        "vol":  stats.loc[s, "annual_vol"],
+        "vix":  get(s, "^vix_close",   20.0),
+        "hy":   get(s, "BAMLH0A0HYM2",  4.0),
+        "nfci": get(s, "NFCI",           0.0),
+    } for s in valid_states}
+
+    # Normalise each feature to [0, 1] across states so distances are comparable
+    for feat in ["ret", "vol", "vix", "hy", "nfci"]:
+        vals = np.array([raw[s][feat] for s in valid_states], dtype=float)
+        lo, hi = vals.min(), vals.max()
+        for s in valid_states:
+            raw[s][f"{feat}_n"] = (raw[s][feat] - lo) / (hi - lo + 1e-9)
+
+    # ── 3. Archetypes in normalised feature space ─────────────────────────────
+    # Each archetype is defined by (ret_n, vol_n, vix_n, hy_n, nfci_n)
+    # 0 = lowest value across states, 1 = highest value across states
+    ARCHETYPES = {
+        #                      ret   vol   vix   hy   nfci
+        "BEAR":         np.array([0.0,  1.0,  1.0,  1.0,  1.0]),
+        "HIGH VOL":     np.array([0.3,  0.8,  0.8,  0.6,  0.5]),
+        "TRANSITIONAL": np.array([0.4,  0.5,  0.5,  0.5,  0.3]),
+        "LOW VOL":      np.array([0.6,  0.2,  0.3,  0.4,  0.1]),
+        "BULL":         np.array([1.0,  0.0,  0.0,  0.0,  0.0]),
+    }
+
+    assert len(ARCHETYPES) == n_states, (
+        f"ARCHETYPES has {len(ARCHETYPES)} entries but model has {n_states} states. "
+        "Update ARCHETYPES to match n_states."
+    )
+
+    PALETTE = {
+        "BEAR":         ("#e05260", "red"),
+        "HIGH VOL":     ("#f0a500", "yellow"),
+        "TRANSITIONAL": ("#9b59b6", "purple"),
+        "LOW VOL":      ("#3a8fd4", "blue"),
+        "BULL":         ("#00d084", "green"),
+    }
+
+    # ── 4. Hungarian assignment: minimise total distance ──────────────────────
+    # Builds a cost matrix [states x archetypes] then finds optimal 1-to-1 match
+    from scipy.optimize import linear_sum_assignment
+
+    archetype_names = list(ARCHETYPES.keys())
+    feat_order      = ["ret_n", "vol_n", "vix_n", "hy_n", "nfci_n"]
+
+    cost = np.zeros((len(valid_states), len(archetype_names)))
+    for i, s in enumerate(valid_states):
+        state_vec = np.array([raw[s][f] for f in feat_order])
+        for j, arch_name in enumerate(archetype_names):
+            cost[i, j] = np.linalg.norm(state_vec - ARCHETYPES[arch_name])
+
+    row_ind, col_ind = linear_sum_assignment(cost)
+
+    # ── 5. Build result ───────────────────────────────────────────────────────
+    result = {}
+    for i, j in zip(row_ind, col_ind):
+        state_id   = valid_states[i]
+        label      = archetype_names[j]
+        color, badge = PALETTE[label]
+        result[state_id] = (color, badge, label)
+
+        ret = raw[state_id]["ret"];  vol = raw[state_id]["vol"]
+        vix = raw[state_id]["vix"];  hy  = raw[state_id]["hy"]
+        pct = stats.loc[state_id, "count"] / len(df) * 100
+        dist = cost[i, j]
+        print(f"  State {state_id} → {label:15s} | ret={ret:+.1f}% vol={vol:.1f}% "
+              f"VIX={vix:.1f} HY={hy:.2f} ({pct:.1f}% of time) dist={dist:.3f}")
+
+    for s in range(n_states):
+        if s not in result:
+            result[s] = ("#888888", "grey", f"REGIME {s}")
+
+    return result
 
 # Fallback names in case user has different labelling
 def regime_label(state_id):
@@ -438,7 +542,7 @@ def spy_regime_chart(df, n_states, lookback_days=504):
             row=1, col=1
         )
 
-    # 3. LEYENDA (Letras blancas)
+    # 3. LEYENDA
     for state_id in range(n_states):
         color, _, label = regime_label(state_id)
         fig.add_trace(go.Scatter(
@@ -457,7 +561,7 @@ def spy_regime_chart(df, n_states, lookback_days=504):
         line=dict(color="#ffffff", width=2),
     ), row=1, col=1)
 
-    # 5. PANEL INFERIOR (VIX - Sin fondo de regímenes)
+    # 5. PANEL INFERIOR (VIX)
     if "^vix_close" in df_plot.columns:
         fig.add_trace(go.Scatter(
             x=df_plot.index, y=df_plot["^vix_close"],
@@ -467,7 +571,7 @@ def spy_regime_chart(df, n_states, lookback_days=504):
             fillcolor="rgba(224,82,96,0.1)",
         ), row=2, col=1)
 
-    # 6. CONFIGURACIÓN VISUAL (Ejes a la izquierda, sin márgenes, texto blanco)
+    # 6. CONFIGURACIÓN VISUAL
     full_layout = PLOTLY_LAYOUT.copy()
     full_layout.update({
         "height": 600,
@@ -664,6 +768,10 @@ def main():
         st.stop()
 
     df, n_states = run_inference(models, data)
+
+    # ── Override REGIME_COLORS with labels computed from the data ─────────────────
+    global REGIME_COLORS
+    REGIME_COLORS = compute_regime_colors(df, models)
 
     # Latest snapshot
     latest      = df.iloc[-1]
