@@ -265,12 +265,12 @@ def compute_regime_colors(_df, _models):
     # Each archetype is defined by (ret_n, vol_n, vix_n, hy_n, nfci_n)
     # 0 = lowest value across states, 1 = highest value across states
     ARCHETYPES = {
-        #                      ret   vol   vix   hy   nfci
-        "BEAR":         np.array([0.0,  1.0,  1.0,  1.0,  1.0]),
-        "HIGH VOL":     np.array([0.3,  0.8,  0.8,  0.6,  0.5]),
-        "TRANSITIONAL": np.array([0.4,  0.5,  0.5,  0.5,  0.3]),
-        "LOW VOL":      np.array([0.6,  0.2,  0.3,  0.4,  0.1]),
-        "BULL":         np.array([1.0,  0.0,  0.0,  0.0,  0.0]),
+        #                           ret   vol   vix   hy    nfci
+        "BEAR": np.array([0.0, 1.0, 1.0, 1.0, 1.0]),  # sin cambios, dist=0
+        "BULL": np.array([1.0, 0.0, 0.1, 0.1, 0.0]),  # → State 1 (máx ret)
+        "LOW VOL": np.array([0.9, 0.0, 0.0, 0.1, 0.0]),  # → State 4 (vol/VIX mínimos)
+        "HIGH VOL": np.array([0.9, 0.2, 0.4, 0.0, 0.1]),  # → State 3 (VIX alto, HY bajo)
+        "TRANSITIONAL": np.array([0.8, 0.1, 0.2, 0.4, 0.2]),  # → State 0 (HY elevado)
     }
 
     assert len(ARCHETYPES) == n_states, (
@@ -875,20 +875,41 @@ def main():
                         width= "stretch", config={"displayModeBar": False})
 
     with col_right:
-        # State probabilities
-        st.markdown('<div class="section-title">STATE PROBABILITIES</div>', unsafe_allow_html=True)
-        st.plotly_chart(state_prob_chart(latest, n_states),
-                        width= "stretch" , config={"displayModeBar": False})
+        st.markdown('<div class="section-title">MARKET OVERVIEW</div>', unsafe_allow_html=True)
 
-        # Transition matrix
-        st.markdown('<div class="section-title">TRANSITION MATRIX</div>', unsafe_allow_html=True)
-        st.plotly_chart(transition_heatmap(models["hmm"]),
-                        width= "stretch", config={"displayModeBar": False})
+        assets = [
+            ("spy_close",     "SPY  S&P500",     "#00d084"),
+            ("qqq_close",     "QQQ  NASDAQ",     "#3a8fd4"),
+            ("^vix_close",    "VIX  VOLATILITY", "#e05260"),
+            ("dx-y.nyb_close","DXY  DOLLAR",     "#f0a500"),
+            ("gc=f_close",    "GC   GOLD",        "#f5c518"),
+        ]
 
-        # Avg regime duration
-        st.markdown('<div class="section-title">AVG REGIME DURATION</div>', unsafe_allow_html=True)
-        st.plotly_chart(regime_duration_chart(df),
-                        width= "stretch", config={"displayModeBar": False})
+        for field, label, clr in assets:
+            if field in df.columns:
+                series = df[field].dropna().tail(252)
+                if len(series) < 5:
+                    continue
+                last_v  = series.iloc[-1]
+                chg_1d  = (last_v / series.iloc[-2]  - 1) if len(series) > 1  else 0
+                chg_1m  = (last_v / series.iloc[-21] - 1) if len(series) > 21 else 0
+                chg_clr = "#00d084" if chg_1d >= 0 else "#e05260"
+                arrow   = "▲" if chg_1d >= 0 else "▼"
+
+                fig_sp = macro_sparkline(series, clr)
+                st.markdown(f"""
+                <div style="background:#0d0d1a; border:1px solid #1a2840; border-radius:4px;
+                            padding:6px 10px 4px; margin-bottom:2px;">
+                  <div style="font-family:'JetBrains Mono',monospace; font-size:9px;
+                              color:#4a6a8a; letter-spacing:0.1em;">{label}</div>
+                  <div style="font-family:'JetBrains Mono',monospace; font-size:15px;
+                              font-weight:700; color:#d4d4d4;">{last_v:.2f}</div>
+                  <div style="font-family:'JetBrains Mono',monospace; font-size:10px;
+                              color:{chg_clr};">{arrow} {chg_1d:+.2%} 1d &nbsp; {chg_1m:+.2%} 1m</div>
+                </div>
+                """, unsafe_allow_html=True)
+                st.plotly_chart(fig_sp, width="stretch",
+                                config={"displayModeBar": False})
 
     # ═══════════════════════════════════════════════════════════════════════
     # ROW 3 — Macro | Events | Regime log
@@ -900,8 +921,8 @@ def main():
         ("FEDFUNDS",       "Fed Funds Rate",      "%",  False),
         ("T10Y2Y",         "Yield Curve 10Y-2Y",  "%",  True),
         ("GS10",           "10Y Treasury",        "%",  False),
-        ("BAMLH0A0HYM2",   "HY OAS Spread",       "%",  True),
-        ("BAMLC0A0CM",     "IG OAS Spread",        "%",  True),
+        ("BAMLH0A0HYM2",   "High Yield OAS Spread",       "%",  True),
+        ("BAMLC0A0CM",     "Investment Grade OAS Spread",        "%",  True),
         ("UNRATE",         "Unemployment",        "%",  True),
         ("CPIAUCSL",       "CPI",                 "",   True),
         ("T5YIE",          "5Y Breakeven Infl.",  "%",  False),
@@ -923,6 +944,13 @@ def main():
             "2Y": 504,
             "5Y": 1260,
         }
+
+        macro_row_count = sum(
+            1 for serie, _, _, _ in macro_indicators
+            if serie in macro_df.columns and len(macro_df[serie].dropna()) >= 2
+        )
+        # 38.5px per row (padding 4px top+bottom + ~25px content)
+        macro_panel_px = macro_row_count * 38.5
 
         rows_html = ""
         for serie, label, unit, higher_bad in macro_indicators:
@@ -974,7 +1002,7 @@ def main():
               <div class="macro-badges">{badges_html}</div>
             </div>"""
 
-        st.markdown(f'<div class="scroll-box">{rows_html}</div>', unsafe_allow_html=True)
+        st.markdown(rows_html, unsafe_allow_html=True)
 
     # ── Events countdown ──────────────────────────────────────────────────────
     with col_events:
@@ -1007,75 +1035,95 @@ def main():
                   <span class="event-days {cls}" title="{date_str}">{lbl}</span>
                 </div>"""
 
-            st.markdown(f'<div class="scroll-box">{rows_html}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="height:{macro_panel_px}px; overflow-y:auto;">{rows_html}</div>', unsafe_allow_html=True)
         else:
             st.info("No schedule data — run search_event() to populate the Schedule table")
 
-    # ── Regime transition log ─────────────────────────────────────────────────
+    # ── Regime intel panel ────────────────────────────────────────────────────
     with col_log:
-        st.markdown('<div class="section-title">REGIME TRANSITION LOG</div>', unsafe_allow_html=True)
-        log_html = ""
-        for idx, row in changes.iloc[::-1].iterrows():
-            s_id = int(row["filtered_state"])
-            c_r, _, s_name = regime_label(s_id)
-            conf = row["confidence"]
-            dur  = int(row["state_duration"])
-            log_html += f"""
-            <div style="margin-bottom:8px; padding:6px 8px; background:#0d0d1a;
-                        border-left:3px solid {c_r}; border-radius:2px;">
-              <div style="font-family:'JetBrains Mono',monospace; font-size:9px;
-                          color:#4a6a8a;">{idx.strftime('%Y-%m-%d')}</div>
-              <div style="font-family:'JetBrains Mono',monospace; font-size:11px;
-                          font-weight:700; color:{c_r}; margin:2px 0;">{s_name}</div>
-              <div style="font-family:'JetBrains Mono',monospace; font-size:9px;
-                          color:#5a7a9a;">conf {conf:.1%}  ·  dur {dur}d</div>
-            </div>"""
-        st.markdown(f'<div class="scroll-box">{log_html}</div>', unsafe_allow_html=True)
+        # ── 1. Current regime historical stats ───────────────────────────────
+        st.markdown('<div class="section-title">CURRENT REGIME STATS</div>', unsafe_allow_html=True)
 
-    # ═══════════════════════════════════════════════════════════════════════
-    # ROW 4 — Multi-asset sparklines
-    # ═══════════════════════════════════════════════════════════════════════
-    st.markdown('<div class="section-title" style="margin-top:10px">MARKET OVERVIEW</div>',
-                unsafe_allow_html=True)
+        df["_spy_ret"] = df["spy_close"].pct_change()
+        regime_stats = df.groupby("filtered_state")["_spy_ret"].agg(
+            mean_ret="mean", std_ret="std", count="count"
+        )
+        regime_stats["annual_ret"] = regime_stats["mean_ret"] * 252 * 100
+        regime_stats["annual_vol"] = regime_stats["std_ret"]  * np.sqrt(252) * 100
+        regime_stats["sharpe"]     = regime_stats["annual_ret"] / (regime_stats["annual_vol"] + 1e-9)
+        regime_stats["pct_time"]   = regime_stats["count"] / len(df) * 100
 
-    assets = [
-        ("spy_close",    "SPY  S&P500",    "#00d084"),
-        ("qqq_close",    "QQQ  NASDAQ",    "#3a8fd4"),
-        ("^vix_close",   "VIX  VOLATILITY","#e05260"),
-        ("dx-y.nyb_close","DXY  DOLLAR",   "#f0a500"),
-        ("gc=f_close",   "GC   GOLD",      "#f5c518"),
-    ]
+        if curr_state in regime_stats.index:
+            rs   = regime_stats.loc[curr_state]
+            rret = rs["annual_ret"]
+            rvol = rs["annual_vol"]
+            rsh  = rs["sharpe"]
+            rpct = rs["pct_time"]
+            ret_clr = "#00d084" if rret >= 0 else "#e05260"
+            sh_clr  = "#00d084" if rsh  >= 1 else "#f0a500" if rsh >= 0 else "#e05260"
 
-    ac = st.columns(len(assets))
-    raw = data["raw_stocks"]
-
-    for col, (field, label, clr) in zip(ac, assets):
-        with col:
-            if field in df.columns:
-                series = df[field].dropna().tail(252)
-                if len(series) < 5:
-                    continue
-                last_v = series.iloc[-1]
-                chg_1d = (last_v / series.iloc[-2] - 1) if len(series) > 1 else 0
-                chg_1m = (last_v / series.iloc[-21] - 1) if len(series) > 21 else 0
-
-                chg_clr = "#00d084" if chg_1d >= 0 else "#e05260"
-                arrow   = "▲" if chg_1d >= 0 else "▼"
-
-                fig_sp = macro_sparkline(series, clr)
-                st.markdown(f"""
-                <div style="background:#0d0d1a; border:1px solid #1a2840; border-radius:4px;
-                            padding:6px 10px 4px; margin-bottom:2px;">
-                  <div style="font-family:'JetBrains Mono',monospace; font-size:9px;
-                              color:#4a6a8a; letter-spacing:0.1em;">{label}</div>
-                  <div style="font-family:'JetBrains Mono',monospace; font-size:15px;
-                              font-weight:700; color:#d4d4d4;">{last_v:.2f}</div>
-                  <div style="font-family:'JetBrains Mono',monospace; font-size:10px;
-                              color:{chg_clr};">{arrow} {chg_1d:+.2%} 1d &nbsp; {chg_1m:+.2%} 1m</div>
+            stats_html = f"""
+            <div style="background:#0d0d1a; border:1px solid #1a2840; border-radius:4px;
+                        padding:10px 12px; margin-bottom:8px; border-left:3px solid {color};">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px 12px;">
+                <div>
+                  <div style="font-family:'JetBrains Mono',monospace; font-size:8px;
+                              color:#4a6a8a; letter-spacing:0.1em;">ANN. RETURN</div>
+                  <div style="font-family:'JetBrains Mono',monospace; font-size:16px;
+                              font-weight:700; color:{ret_clr};">{rret:+.1f}%</div>
                 </div>
-                """, unsafe_allow_html=True)
-                st.plotly_chart(fig_sp, width="stretch",
-                                config={"displayModeBar": False})
+                <div>
+                  <div style="font-family:'JetBrains Mono',monospace; font-size:8px;
+                              color:#4a6a8a; letter-spacing:0.1em;">ANN. VOL</div>
+                  <div style="font-family:'JetBrains Mono',monospace; font-size:16px;
+                              font-weight:700; color:#d4d4d4;">{rvol:.1f}%</div>
+                </div>
+                <div>
+                  <div style="font-family:'JetBrains Mono',monospace; font-size:8px;
+                              color:#4a6a8a; letter-spacing:0.1em;">SHARPE</div>
+                  <div style="font-family:'JetBrains Mono',monospace; font-size:16px;
+                              font-weight:700; color:{sh_clr};">{rsh:.2f}</div>
+                </div>
+                <div>
+                  <div style="font-family:'JetBrains Mono',monospace; font-size:8px;
+                              color:#4a6a8a; letter-spacing:0.1em;">% OF TIME</div>
+                  <div style="font-family:'JetBrains Mono',monospace; font-size:16px;
+                              font-weight:700; color:#d4d4d4;">{rpct:.1f}%</div>
+                </div>
+              </div>
+            </div>"""
+            st.markdown(stats_html, unsafe_allow_html=True)
+
+        # ── 2. Next-state transition probabilities ────────────────────────────
+        st.markdown('<div class="section-title">NEXT REGIME PROBABILITIES</div>', unsafe_allow_html=True)
+
+        transmat   = models["hmm"].transmat_
+        trans_row  = transmat[curr_state]           # probabilities from current state
+        sorted_idx = np.argsort(trans_row)[::-1]    # descending
+
+        trans_html = ""
+        for s_id in sorted_idx:
+            prob        = trans_row[s_id]
+            s_clr, _, s_name = regime_label(s_id)
+            bar_w       = int(prob * 100)
+            is_self     = s_id == curr_state
+            opacity     = "1.0" if not is_self else "0.55"
+            self_label  = " ← current" if is_self else ""
+            trans_html += f"""
+            <div style="margin-bottom:7px; opacity:{opacity};">
+              <div style="display:flex; justify-content:space-between; align-items:center;
+                          font-family:'JetBrains Mono',monospace; font-size:9px;
+                          margin-bottom:2px;">
+                <span style="color:{s_clr}; font-weight:700;">{s_name}{self_label}</span>
+                <span style="color:#8aa8c4;">{prob:.1%}</span>
+              </div>
+              <div style="background:#0f1a2a; border-radius:2px; height:5px; width:100%;">
+                <div style="background:{s_clr}; width:{bar_w}%; height:5px;
+                            border-radius:2px; transition:width 0.3s;"></div>
+              </div>
+            </div>"""
+
+        st.markdown(f'<div style="padding:2px 0">{trans_html}</div>', unsafe_allow_html=True)
 
     # ── Footer ─────────────────────────────────────────────────────────────────
     st.markdown("""
