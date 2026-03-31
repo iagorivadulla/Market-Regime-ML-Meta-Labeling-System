@@ -3,107 +3,125 @@
 ![Python](https://img.shields.io/badge/Python-3.8+-blue?style=flat-square&logo=python)
 ![SQLite](https://img.shields.io/badge/SQLite-3-green?style=flat-square&logo=sqlite)
 ![Pandas](https://img.shields.io/badge/Pandas-2.0+-orange?style=flat-square&logo=pandas)
-![NumPy](https://img.shields.io/badge/NumPy-1.24+-blue?style=flat-square&logo=numpy)
-![Scikit-learn](https://img.shields.io/badge/Scikit--learn-1.3+-orange?style=flat-square&logo=scikit-learn)
+![NumPy](https://img.shields.io/badge/NumPy-2.4+-blue?style=flat-square&logo=numpy)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.0+-orange?style=flat-square&logo=streamlit)
 ![TA-Lib](https://img.shields.io/badge/TA--Lib-0.6+-green?style=flat-square)
 ![HMMlearn](https://img.shields.io/badge/HMMlearn-0.3+-purple?style=flat-square)
-![Selenium](https://img.shields.io/badge/Selenium-4.41+-green?style=flat-square&logo=selenium)
 
-## 📈 Visualización de Regímenes de Mercado
+## 🖥️ Dashboard interactivo
 
-![Ejemplo de Detección de Regímenes](models/regimes.png)
+Este proyecto incluye un dashboard interactivo creado en `src/dashboard.py` que se ejecuta con Streamlit.
 
-## 📋 Descripción
+```bash
+streamlit run src/dashboard.py
+```
 
-Este proyecto es un sistema de **machine learning** avanzado para la detección de regímenes de mercado utilizando **meta-etiquetado** (meta-labeling). El sistema recopila datos financieros históricos, indicadores macroeconómicos y eventos económicos para identificar diferentes estados de mercado (regímenes) mediante modelos de **Markov ocultos (HMM)** y aplicar técnicas de meta-etiquetado para mejorar las decisiones de trading. 🤖📈
+![Dashboard 1](src/Dashboard_1.png)
 
-## ✨ Características
+![Dashboard 2](src/Dashboard_2.png)
 
-- **🔄 Recopilación de datos automatizada**: Descarga precios de acciones, indicadores macro y eventos económicos.
-- **⚙️ Procesamiento de datos**: Aplica indicadores técnicos usando TA-Lib y limpia datos macroeconómicos.
-- **🎯 Detección de regímenes**: Utiliza HMM para identificar regímenes de mercado basados en datos multivariados.
-- **🏷️ Meta-etiquetado**: Framework para validar y mejorar señales de trading usando machine learning.
-- **💾 Almacenamiento eficiente**: Usa SQLite para almacenamiento local y procesamiento de datos.
+## 📌 Descripción
 
-## 📊 Fuentes de datos
+Este repositorio es un sistema de detección de regímenes de mercado que combina:
 
-| Tipo | Descripción | Fuente |
-|------|-------------|--------|
-| **💰 Precios de mercado** | SPY (S&P 500), QQQ (Nasdaq), ^VIX (Volatilidad), DX=F (Índice dólar), GC=F (Oro) | Yahoo Finance |
-| **📈 Indicadores macroeconómicos** | Tasas de interés, desempleo, inflación, etc. | FRED (Federal Reserve Economic Data) |
-| **📰 Eventos económicos** | Datos históricos de eventos como NFP, CPI, etc. | ForexFactory |
+- datos de precios financieros,
+- indicadores macroeconómicos,
+- eventos económicos históricos,
+- modelos de Markov ocultos (HMM),
+- y un enfoque de meta-etiquetado para mejorar señales de trading.
 
-## 📦 Dependencias
+El objetivo es convertir datos financieros complejos en una estructura procesable para análisis de regímenes y estrategias basadas en machine learning.
 
-| Librería | Versión | Descripción |
-|----------|---------|-------------|
-| SQLAlchemy | ~=2.0.46 | ORM para bases de datos |
-| pandas | ~=3.0.1 | Manipulación de datos |
-| numpy | ~=2.4.2 | Computación numérica |
-| selenium | ~=4.41.0 | Automatización web |
-| lxml | ~=6.0.2 | Procesamiento XML |
-| TA-Lib | ~=0.6.8 | Indicadores técnicos |
-| hmmlearn | ~=0.3.3 | Modelos HMM |
-| undetected-chromedriver | ~=3.5.5 | Navegador headless |
+## ✨ Principales funcionalidades
 
-Instala las dependencias con:
+- **Extracción de datos**: descarga histórica de precios, datos macroeconómicos y eventos.
+- **Procesamiento de señales**: aplica indicadores técnicos con TA-Lib y organiza datos macroeconómicos.
+- **Modelado de regímenes**: identifica estados de mercado con HMM multivariantes.
+- **Meta-etiquetado**: crea una capa de validación de señales para mejorar la calidad de las decisiones.
+- **Persistencia en SQLite**: guarda datos en una base local para análisis y reproducibilidad.
+
+## 📦 Dependencias principales
+
+Las dependencias se encuentran en `requirements.txt`. Entre las más relevantes están:
+
+- `SQLAlchemy`
+- `pandas`
+- `numpy`
+- `TA-Lib`
+- `hmmlearn`
+- `selenium`
+- `undetected-chromedriver`
+- `yfinance`
+- `fredapi`
+- `xgboost`
+- `plotly`
+- `streamlit`
+
+## 🚀 Instalación rápida
+
+1. Clona el repositorio:
+
+```bash
+git clone https://github.com/iagorivadulla/Market-Regime-ML-Meta-Labeling-System.git
+cd Market-Regime-ML-Meta-Labeling-System
+```
+
+2. Instala las dependencias:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## 🛠️ Instalación
+3. Configura tu API key de FRED creando un archivo `.env` en la raíz del proyecto:
 
-1. **Clona el repositorio**:
-   ```bash
-   git clone https://github.com/iagorivadulla/Market-Regime-ML-Meta-Labeling-System.git
-   cd Market-Regime-ML-Meta-Labeling-System
-   ```
+```text
+API_KEY=tu_api_key_aqui
+```
 
-2. **Instala las dependencias**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+## 🛠️ Uso básico
 
-3. **Configura la API key de FRED** 🔑:
-   - Obtén una API key gratuita en [FRED Account](https://fredaccount.stlouisfed.org/apikey).
-   - Crea un archivo `.env` en la raíz del proyecto:
-     ```
-     API_KEY=tu_api_key_aqui
-     ```
-
-## 🚀 Uso
-
-### 📥 Recopilación de datos
-
-Ejecuta el script principal para recopilar y procesar todos los datos:
+Para extraer y preparar los datos, ejecuta:
 
 ```bash
 python src/get_all_data.py
 ```
 
-Esto creará una base de datos SQLite en `data/raw/data.db` con las tablas:
-- `Stocks`: Precios históricos. 📊
-- `Macro`: Indicadores macroeconómicos. 📉
-- `Events`: Eventos económicos. 📰
-- `Schedule`: Fechas próximas de eventos. 📅
+Esto generará la base de datos SQLite en `data/raw/data.db` con tablas que incluyen precios, macro, eventos y programación de eventos.
 
-### 🔄 Procesamiento de datos
+## 🖥️ Dashboard interactivo
 
-Los datos se procesan automáticamente:
-- Indicadores técnicos se calculan para cada activo usando TA-Lib.
-- Datos macro se transponen y rellenan hacia adelante.
-- Eventos se limpian y formatean numéricamente.
+Una vez que tengas los datos y los modelos guardados en la carpeta `models/`, puedes abrir el panel desde `src` con Streamlit:
 
-Los datos procesados se guardan en tablas `_processed` y se combinan en un DataFrame final.
+```bash
+streamlit run src/dashboard.py
+```
 
-### 🤖 Modelado
+El dashboard está diseñado como una terminal estilo Bloomberg para visualizar regímenes de mercado, indicadores macroeconómicos y señales de meta-etiquetado.
 
-- Usa los notebooks en `models/` para experimentar con HMM. 📓
-- `model_testing_components.ipynb`: Prueba diferentes números de componentes HMM.
-- `testing.ipynb`: Exploración y visualización de datos.
+![Dashboard 1](src/Dashboard_1.png)
 
-Ejemplo de carga de datos procesados:
+![Dashboard 2](src/Dashboard_2.png)
+
+## 📁 Estructura del proyecto
+
+- `data/raw/`: scripts para descarga y creación de datos originales.
+- `data/interim/`: procesamiento intermedio y limpieza.
+- `data/processed/`: generación del dataset final combinado.
+- `models/`: notebooks y archivos de modelos entrenados para HMM y meta-etiquetado.
+- `src/get_all_data.py`: script principal de carga y preparación de datos.
+- `src/dashboard.py`: dashboard Streamlit para visualización y análisis.
+
+## 🧪 Notebooks de referencia
+
+Explora los notebooks para entender la lógica del modelo y del meta-etiquetado:
+
+- `models/hmm_model.ipynb`
+- `models/hmm_model_testing_components.ipynb`
+- `models/metalabeling.ipynb`
+- `models/metalabeling_testing.ipynb`
+- `models/position_sizing.ipynb`
+
+## 💡 Ejemplo de uso en Python
 
 ```python
 import sqlalchemy as db
@@ -114,44 +132,20 @@ df = final_db(engine)
 print(df.head())
 ```
 
-## 📁 Estructura del proyecto
+## 🤝 Contribuciones
 
-```
-📂 Market-Regime-ML-Meta-Labeling-System/
-├── 📄 README.md
-├── 📄 requirements.txt
-├── 📂 data/
-│   ├── 📂 raw/
-│   │   ├── 🐍 database_creation.py
-│   │   ├── 🐍 events_data.py
-│   │   ├── 🐍 fed_data.py
-│   │   ├── 🐍 market_prices.py
-│   │   └── 📓 testing.ipynb
-│   ├── 📂 interim/
-│   │   ├── 🐍 process_db.py
-│   │   └── 📓 testing.ipynb
-│   └── 📂 processed/
-│       ├── 🐍 final_db.py
-│       └── 📓 testing.ipynb
-├── 📂 models/
-│   ├── 📓 model_testing_components.ipynb
-│   └── 📓 testing.ipynb
-└── 📂 src/
-    ├── 🐍 get_all_data.py
-    └── 🐍 __init__.py
-```
+Si quieres colaborar:
 
-## 🤝 Contribución
-
-Si deseas contribuir:
-1. Haz un fork del repositorio. 🍴
-2. Crea una rama para tu feature. 🌿
-3. Envía un pull request. 🔄
+1. Haz un fork del repositorio.
+2. Crea una rama con tu feature.
+3. Envía un pull request.
 
 ## 📄 Licencia
 
-Este proyecto está bajo la licencia MIT. Ver `LICENSE` para más detalles.
+Proyecto bajo licencia MIT. Consulta el archivo `LICENSE`.
 
 ## 📞 Contacto
 
-Para preguntas o soporte, contacta a [iagorivadulla](https://github.com/iagorivadulla). 💬
+Para dudas o comentarios, visita:
+
+[https://github.com/iagorivadulla](https://github.com/iagorivadulla)
