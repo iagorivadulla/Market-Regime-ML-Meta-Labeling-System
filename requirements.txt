@@ -12,4 +12,4 @@ xgboost~=3.2.0
 streamlit
 plotly
 yfinance~=1.2.0
-distutils
+standard-distutils
