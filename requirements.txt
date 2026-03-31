@@ -11,4 +11,4 @@ undetected-chromedriver~=3.5.5
 xgboost~=3.2.0
 streamlit
 plotly
-yfinance
+yfinance~=1.2.0
