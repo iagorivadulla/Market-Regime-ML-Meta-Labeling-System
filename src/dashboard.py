@@ -575,6 +575,7 @@ def spy_regime_chart(df, n_states, lookback_days=504):
     full_layout = PLOTLY_LAYOUT.copy()
     full_layout.update({
         "height": 600,
+        "dragmode": "zoom",
         "font": {"color": "#ffffff"},
         "showlegend": True,
         "legend": dict(
@@ -590,7 +591,7 @@ def spy_regime_chart(df, n_states, lookback_days=504):
             showgrid=True,
             gridcolor="#1a2840",
             tickfont=dict(color="white"),
-            fixedrange=True,
+            fixedrange=False,
             automargin=False,
             constrain="domain",
         ),
