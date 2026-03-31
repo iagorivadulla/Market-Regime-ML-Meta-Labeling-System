@@ -739,9 +739,6 @@ def main():
     st.markdown(f"""
     <div class="terminal-header">
       <span class="logo">▎REGIME TERMINAL</span>
-      <span class="sep">│</span>
-      <span>S&P 500 · MACRO · HMM · METALABELING</span>
-      <span class="sep">│</span>
       <span style="margin-left:auto; color:#2a5a8a">{now}</span>
     </div>
     """, unsafe_allow_html=True)
@@ -1133,7 +1130,11 @@ def main():
             color:#1e3a5f; border-top:1px solid #0f1a2a;">
       Model: HMM (5-state Gaussian) + RF Meta-labeling (threshold = 0.75)<br>
       Data sources: FRED · ForexFactory · Yahoo Finance (open prices)<br>
-      This content is for informational purposes only and does not constitute financial advice.
+      This content is for informational purposes only and does not constitute financial advice.<br>
+            <a href="https://github.com/iagorivadulla" target="_blank" 
+         style="color: #4a8fc4; text-decoration: none; font-weight: bold;">
+         github.com/iagorivadulla
+      </a>
     </div>
     """, unsafe_allow_html=True)
 
