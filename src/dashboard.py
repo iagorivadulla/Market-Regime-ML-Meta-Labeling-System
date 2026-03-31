@@ -1,23 +1,3 @@
-"""
-╔══════════════════════════════════════════════════════╗
-║   MARKET REGIME TERMINAL  —  HMM + MetaLabeling      ║
-║   Bloomberg-style Streamlit dashboard                ║
-╚══════════════════════════════════════════════════════╝
-
-Run:  streamlit run dashboard.py
-Deps: streamlit plotly pandas sqlalchemy hmmlearn scikit-learn joblib python-dotenv yfinance fredapi ta-lib undetected-chromedriver
-
-Folder structure expected (same as your notebooks):
-  models/
-    hmm_model.pkl
-    scaler.pkl
-    pca.pkl
-    meta_model.pkl          ← save with joblib.dump(meta_model, 'models/meta_model.pkl')
-  data/raw/data.db
-  src/
-    get_all_data.py  (your existing pipeline)
-"""
-
 import warnings
 warnings.filterwarnings("ignore")
 
