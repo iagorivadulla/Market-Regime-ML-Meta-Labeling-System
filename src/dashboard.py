@@ -31,7 +31,7 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 import os
-#from get_all_data import get_all_data
+from get_all_data import get_all_data
 
 # ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -371,7 +371,7 @@ def load_data():
 
     engine = db.create_engine(f"sqlite:///{db_path}")
 
-    #get_all_data(engine)
+    get_all_data(engine)
 
     try:
         stocks = pd.read_sql("SELECT * FROM stocks_processed", engine)
@@ -1128,11 +1128,11 @@ def main():
     # ── Footer ─────────────────────────────────────────────────────────────────
     st.markdown("""
     <div style="text-align:center; padding:12px; margin-top:12px;
-                font-family:'JetBrains Mono',monospace; font-size:9px;
-                color:#1e3a5f; border-top:1px solid #0f1a2a;">
-      HMM 5-STATE GAUSSIAN  ·  RF METALABELING (threshold=0.75)
-      ·  DATA: FRED · ForexFactory · YFinance
-      ·  NOT FINANCIAL ADVICE
+            font-family:'JetBrains Mono', monospace; font-size:10px;
+            color:#1e3a5f; border-top:1px solid #0f1a2a;">
+      Model: HMM (5-state Gaussian) + RF Meta-labeling (threshold = 0.75)<br>
+      Data sources: FRED · ForexFactory · Yahoo Finance (open prices)<br>
+      This content is for informational purposes only and does not constitute financial advice.
     </div>
     """, unsafe_allow_html=True)
 
