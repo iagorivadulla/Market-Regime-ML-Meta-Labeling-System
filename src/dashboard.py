@@ -11,7 +11,7 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 import os
-#from get_all_data import get_all_data
+from get_all_data import get_all_data
 
 # ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -351,7 +351,7 @@ def load_data():
 
     engine = db.create_engine(f"sqlite:///{db_path}")
 
-    #get_all_data(engine)
+    get_all_data(engine)
 
     try:
         stocks = pd.read_sql("SELECT * FROM stocks_processed", engine)
@@ -516,7 +516,7 @@ def spy_regime_chart(df, n_states, lookback_days=504):
             y0=y_min, y1=y_max,
             xref="x", yref="y",
             fillcolor=color,
-            opacity=0.15,
+            opacity=0.10,
             layer="below",
             line_width=0,
             row=1, col=1
