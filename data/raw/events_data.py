@@ -17,7 +17,7 @@ from selenium.webdriver.support import expected_conditions as EC
 # ── Config ─────────────────────────────────────────────────────────────────────
 
 # Set to True to run Chrome in the background (no visible window)
-HEADLESS = False
+HEADLESS = False #just for testing, running this headless will fail the data extraction, best minimize window
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -238,6 +238,7 @@ def search_event(engine):
     driver.execute_script(
         "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
     )
+    driver.minimize_window() #best minimize than headless
 
     try:
         driver.get("https://www.forexfactory.com/calendar")
