@@ -230,6 +230,8 @@ def search_event(engine):
     options.add_argument("--window-size=1920,1080")
     options.add_argument("--start-maximized")
     options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
 
     # headless=True hides the browser window; set HEADLESS = False at the top to watch it run
     driver = uc.Chrome(options=options, headless=HEADLESS, version_main=145)

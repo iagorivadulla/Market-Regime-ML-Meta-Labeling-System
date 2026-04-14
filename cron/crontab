@@ -1,0 +1,5 @@
+SHELL=/bin/bash
+DISPLAY=:99
+
+# Ejecuta get_all_data cada día a las 7:00 AM (hora Madrid)
+0 7 * * * cd /app && python -c "import sqlalchemy as db; from get_all_data import get_all_data; engine = db.create_engine('sqlite:///data/raw/data.db'); get_all_data(engine)" >> /var/log/cron.log 2>&1

@@ -1,0 +1,46 @@
+services:
+  streamlit:
+    build: .
+    container_name: streamlit-app
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env                          # carga API_KEY automáticamente
+    environment:
+      - TZ=Europe/Madrid
+      - DISPLAY=:99                   # apunta a la pantalla virtual
+    command: >
+      bash -c "Xvfb :99 -screen 0 1920x1080x24 &
+               streamlit run src/dashboard.py
+               --server.port=8501
+               --server.address=0.0.0.0"
+    volumes:
+      - ./data:/app/data
+    networks:
+      - app-network
+
+  scheduler:
+    build: .
+    container_name: streamlit-scheduler
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - TZ=Europe/Madrid
+      - DISPLAY=:99                   # misma pantalla virtual
+    command: >
+      bash -c "Xvfb :99 -screen 0 1920x1080x24 &
+               sleep 2 &&
+               printenv > /etc/environment &&
+               crontab /app/cron/crontab &&
+               cron -f"
+    volumes:
+      - ./data:/app/data
+      - ./cron/crontab:/app/cron/crontab:ro
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
