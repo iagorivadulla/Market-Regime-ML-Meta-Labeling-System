@@ -103,11 +103,21 @@ def get_fed_data(engine):
 
 
     for serie in indicators:
-        get_data(serie, engine)
+        for i in range(5):
+            try:
+                print(f'Getting data for {serie} try {i + 1}')
+                get_data(serie, engine)
+                break
+            except Exception as e:
+                print(f'Exception getting data for {serie} try {i + 1}')
+
+                if i == 4:
+                    print(f'Cannot get data for {serie}, searching next')
+                    continue
 
 
 
 if __name__ == '__main__':
-
+    engine = db.create_engine('sqlite:///data.db')
     #first creation of the macro table
-    get_fed_data()
+    get_fed_data(engine)

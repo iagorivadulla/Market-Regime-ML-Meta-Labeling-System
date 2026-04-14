@@ -521,7 +521,6 @@ def spy_regime_chart(df, n_states, lookback_days=504):
             line_width=0,
             row=1, col=1
         )
-
     # 3. LEYENDA
     for state_id in range(n_states):
         color, _, label = regime_label(state_id)
