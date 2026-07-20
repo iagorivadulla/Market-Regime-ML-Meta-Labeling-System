@@ -234,7 +234,7 @@ def search_event(engine):
     options.add_argument("--disable-dev-shm-usage")
 
     # headless=True hides the browser window; set HEADLESS = False at the top to watch it run
-    driver = uc.Chrome(options=options, headless=HEADLESS, version_main=145)
+    driver = uc.Chrome(options=options, headless=HEADLESS, version_main=149)
 
     # Remove any remaining webdriver traces
     driver.execute_script(
