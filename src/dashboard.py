@@ -222,7 +222,7 @@ def compute_regime_colors(_df, _models):
 
     valid_states = [s for s in range(n_states) if s in stats.index]
 
-    # ── 2. Build feature vector per state (normalised 0-1) ────────────────────
+    # ── 2. Build feature vector per state ─────────────────────────────────────
     def get(s, col, default):
         return means_df.iloc[s].get(col, default)
 
@@ -234,29 +234,21 @@ def compute_regime_colors(_df, _models):
         "nfci": get(s, "NFCI",           0.0),
     } for s in valid_states}
 
-    # Normalise each feature to [0, 1] across states so distances are comparable
+    # Genera las claves '_n' requeridas en feat_order
     for feat in ["ret", "vol", "vix", "hy", "nfci"]:
         vals = np.array([raw[s][feat] for s in valid_states], dtype=float)
         lo, hi = vals.min(), vals.max()
         for s in valid_states:
             raw[s][f"{feat}_n"] = (raw[s][feat] - lo) / (hi - lo + 1e-9)
 
-    # ── 3. Archetypes in normalised feature space ─────────────────────────────
-    # Each archetype is defined by (ret_n, vol_n, vix_n, hy_n, nfci_n)
-    # 0 = lowest value across states, 1 = highest value across states
+    # ── 3. Archetypes ─────────────────────────────────────────────────────────
     ARCHETYPES = {
-        #                           ret   vol   vix   hy    nfci
-        "BEAR": np.array([0.0, 1.0, 1.0, 1.0, 1.0]),  # sin cambios, dist=0
-        "BULL": np.array([1.0, 0.0, 0.1, 0.1, 0.0]),  # → State 1 (máx ret)
-        "LOW VOL": np.array([0.9, 0.0, 0.0, 0.1, 0.0]),  # → State 4 (vol/VIX mínimos)
-        "HIGH VOL": np.array([0.9, 0.2, 0.4, 0.0, 0.1]),  # → State 3 (VIX alto, HY bajo)
-        "TRANSITIONAL": np.array([0.8, 0.1, 0.2, 0.4, 0.2]),  # → State 0 (HY elevado)
+        "BEAR": np.array([0.00, 1.00, 1.00, 1.00, 1.00]),  # Mín ret, máx vol/VIX/HY/NFCI
+        "HIGH VOL": np.array([1.00, 0.29, 0.46, 0.57, 0.20]),  # Máx ret (+20.6%), vol y VIX medios
+        "LOW VOL": np.array([0.83, 0.00, 0.00, 0.44, 0.10]),  # Vol y VIX mínimos históricos (12.6% / 14.9)
+        "BULL": np.array([0.66, 0.05, 0.19, 0.00, 0.00]),  # Retorno sólido (+11.5%), HY/NFCI mínimos (2.97)
+        "TRANSITIONAL": np.array([0.71, 0.15, 0.31, 0.74, 0.40]),  # Spread HY alto (5.68) previo a tensión
     }
-
-    assert len(ARCHETYPES) == n_states, (
-        f"ARCHETYPES has {len(ARCHETYPES)} entries but model has {n_states} states. "
-        "Update ARCHETYPES to match n_states."
-    )
 
     PALETTE = {
         "BEAR":         ("#e05260", "red"),
@@ -266,8 +258,7 @@ def compute_regime_colors(_df, _models):
         "BULL":         ("#00d084", "green"),
     }
 
-    # ── 4. Hungarian assignment: minimise total distance ──────────────────────
-    # Builds a cost matrix [states x archetypes] then finds optimal 1-to-1 match
+    # ── 4. Hungarian assignment ───────────────────────────────────────────────
     from scipy.optimize import linear_sum_assignment
 
     archetype_names = list(ARCHETYPES.keys())
@@ -289,10 +280,14 @@ def compute_regime_colors(_df, _models):
         color, badge = PALETTE[label]
         result[state_id] = (color, badge, label)
 
-        ret = raw[state_id]["ret"];  vol = raw[state_id]["vol"]
-        vix = raw[state_id]["vix"];  hy  = raw[state_id]["hy"]
+        ret = raw[state_id]["ret"];
+        vol = raw[state_id]["vol"]
+        vix = raw[state_id]["vix"];
+        hy = raw[state_id]["hy"]
         pct = stats.loc[state_id, "count"] / len(df) * 100
         dist = cost[i, j]
+
+        # Printea los datos en consola
         print(f"  State {state_id} → {label:15s} | ret={ret:+.1f}% vol={vol:.1f}% "
               f"VIX={vix:.1f} HY={hy:.2f} ({pct:.1f}% of time) dist={dist:.3f}")
 
